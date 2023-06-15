@@ -1,0 +1,7 @@
+/build
+/launcher
+/res.h
+
+*.o
+*.a
+*~
