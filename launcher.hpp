@@ -44,6 +44,8 @@ extern void fl_message_title(const char *title);
 #define MARATHON_YELLOW  fl_rgb_color(227, 188,   0)
 #define MARATHON_GRAY    fl_rgb_color(149, 149, 149)
 
+#define BOXTYPE FL_THIN_UP_BOX
+
 class circle;
 class movebox;
 class logobutton;
@@ -61,9 +63,8 @@ private:
 public:
 
     circle(int X, int Y, int D, Fl_Color C)
-    : Fl_Widget(X,Y,0,0)
+    : Fl_Widget(X,Y,0,0), m_d(D)
     {
-        m_d = D;
         color(C);
     }
 
@@ -114,11 +115,10 @@ private:
 public:
 
     logobutton(int X, int Y, int W, int H, Fl_Color col, launcher *o, const char *L)
-    : Fl_Button(X,Y,W,H,L)
+    : Fl_Button(X,Y,W,H,L), m_col(col), m_l(o)
     {
-        m_col = col;
-        m_l = o;
-        box(FL_THIN_UP_BOX);
+        box(BOXTYPE);
+        labelsize(16);
     }
 
     virtual ~logobutton() {}
@@ -140,10 +140,8 @@ private:
 public:
 
     launcher_window(int W, int H, launcher *o, const char *L)
-    : Fl_Double_Window(W,H,L)
-    {
-        m_l = o;
-    }
+    : Fl_Double_Window(W,H,L), m_l(o)
+    {}
 
     virtual ~launcher_window() {}
 
@@ -166,19 +164,19 @@ private:
     static bool m_verbose;
     const char *m_script = NULL;
 
-    void make_window();
+    void make_window(bool system_colors);
 
 public:
 
     static void print_fltk_version();
 
-    launcher()
+    launcher(bool system_colors)
     {
         /* need to set m_home and allocate
          * m_win before anything else */
         m_home = getenv("HOME");
         print_fltk_version();
-        make_window();
+        make_window(system_colors);
     }
 
     ~launcher() {
@@ -186,7 +184,7 @@ public:
         if (m_png) delete m_png;
     }
 
-    int run(bool system_colors);
+    int run();
     bool download();
 
     void script(const char *p);

@@ -506,11 +506,21 @@ void launcher::launch_cb(Fl_Widget *o, void *p)
     o->window()->show();
 }
 
-/* create a window but don't show() is yet */
-void launcher::make_window()
+/* create a window but don't show() it yet */
+void launcher::make_window(bool system_colors)
 {
     Fl_Widget *o;
     const int y = 220;
+
+    if (system_colors) {
+        Fl::get_system_colors();
+    } else {
+        const uchar u = 60;
+        Fl::background(u,u,u);
+        Fl::background2(u,u,u);
+    }
+
+    Fl::scheme("gtk+");
 
     /* window begin */
     m_win = new launcher_window(234, 145+y, this, "Marathon Launcher");
@@ -518,7 +528,7 @@ void launcher::make_window()
 
     /* Aleph One logo */
     m_cirlce_o1 = new circle((m_win->w() - 200)/2, 10, 200, MARATHON_GREEN);
-    new circle((m_win->w() - 130)/2, 18, 130, FL_BACKGROUND_COLOR);
+    new circle((m_win->w() - 130)/2, 18, 130, m_win->color());
     m_cirlce_o2 = new circle((m_win->w() - 105)/2, 30, 105, MARATHON_GREEN);
     new Fl_Box(FL_FLAT_BOX, (m_win->w() - 20)/2, 145, 20, 66, NULL);
 
@@ -526,31 +536,33 @@ void launcher::make_window()
     new movebox(0, 0, m_win->w(), m_win->h());
 
     /* Marathon Trilogy */
-    { o = new logobutton(10, y, m_win->w()-20, 30, MARATHON_BLUE, this, "Marathon");
-    o->callback(launch_cb, (void *)"alephone ~/.alephone/data-marathon-master"); }
+    o = new logobutton(10, y, m_win->w()-20, 30, MARATHON_BLUE, this, "Marathon");
+    o->callback(launch_cb, (void *)"alephone ~/.alephone/data-marathon-master");
 
-    { o = new logobutton(10, 30+y, m_win->w()-20, 30, MARATHON_YELLOW, this, "Marathon 2: Durandal");
-    o->callback(launch_cb, (void *)"alephone ~/.alephone/data-marathon-2-master"); }
+    o = new logobutton(10, 30+y, m_win->w()-20, 30, MARATHON_YELLOW, this, "Marathon 2: Durandal");
+    o->callback(launch_cb, (void *)"alephone ~/.alephone/data-marathon-2-master");
 
-    { o = new logobutton(10, 60+y, m_win->w()-20, 30, MARATHON_GRAY, this, "Marathon Infinity");
-    o->callback(launch_cb, (void *)"alephone ~/.alephone/data-marathon-infinity-master"); }
+    o = new logobutton(10, 60+y, m_win->w()-20, 30, MARATHON_GRAY, this, "Marathon Infinity");
+    o->callback(launch_cb, (void *)"alephone ~/.alephone/data-marathon-infinity-master");
 
     const int w2 = (m_win->w() - 20) / 2;
     const int y2 = m_win->h() - 40;
 
     /* Download Files */
-    { o = new Fl_Button(10, y2, w2, 30, "Download Files");
-    o->box(FL_THIN_UP_BOX);
-    o->callback(download_cb, this); }
+    o = new Fl_Button(10, y2, w2-1, 30, "Download Files");
+    o->box(BOXTYPE);
+    o->labelsize(13);
+    o->callback(download_cb, this);
 
     /* Github */
     auto github_cb = [] (Fl_Widget *) {
         command("xdg-open https://github.com/Aleph-One-Marathon 2>/dev/null >/dev/null");
     };
 
-    { o = new Fl_Button(w2+10, y2, w2, 30, "Visit Github");
-    o->box(FL_THIN_UP_BOX);
-    o->callback(github_cb); }
+    o = new Fl_Button(w2+11, y2, w2, 30, "Visit Github");
+    o->box(BOXTYPE);
+    o->labelsize(13);
+    o->callback(github_cb);
 
     /* window end */
     m_win->end();
@@ -560,13 +572,9 @@ void launcher::make_window()
     m_win->position((Fl::w() - m_win->decorated_w()) / 2, (Fl::h() - m_win->decorated_h()) / 2);
 }
 
-/* load icons and show() the window */
-int launcher::run(bool system_colors)
+/* load icon and show() the window */
+int launcher::run()
 {
-    if (system_colors) {
-        Fl::get_system_colors();
-    }
-
     load_default_icon();
     m_win->show();
 
@@ -575,7 +583,7 @@ int launcher::run(bool system_colors)
 
 static void print_help(const char *argv0)
 {
-    const char *help1 =
+    const char *msg =
         "usage: %s --help\n"
         "       %s [--verbose] [--download-script=SCRIPT] [--no-system-colors]\n"
         "\n"
@@ -596,13 +604,7 @@ static void print_help(const char *argv0)
         "\n"
         "Icon lookup paths:\n";
 
-    const char *help2 =
-        "  ~/.alephone/alephone.png  (will be overwritten on new game downloads)\n"
-        "  /usr/share/icons/hicolor/<...>/apps/alephone.png\n"
-        "  /usr/share/pixmaps/alephone.png\n"
-        "\n";
-
-    printf(help1, argv0, argv0);
+    printf(msg, argv0, argv0);
 
     std::string prog = launcher::get_progname_png();
 
@@ -616,7 +618,10 @@ static void print_help(const char *argv0)
         printf("  %s\n", self.c_str());
     }
 
-    printf("%s", help2);
+    puts("  ~/.alephone/alephone.png  (will be overwritten on new game downloads)\n"
+        "  /usr/share/icons/hicolor/<...>/apps/alephone.png\n"
+        "  /usr/share/pixmaps/alephone.png\n");
+
     launcher::print_fltk_version();
 }
 
@@ -641,9 +646,9 @@ int main(int argc, char **argv)
         }
     }
 
-    launcher l;
+    launcher l(arg_system_colors);
     l.verbose(arg_verbose);
     l.script(arg_script);
 
-    return l.run(arg_system_colors);
+    return l.run();
 }

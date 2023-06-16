@@ -43,10 +43,8 @@ clean:
 distclean: clean
 	-rm -rf build
 
-$(BIN): $(FLTK_CONFIG) launcher.cpp
+$(BIN): $(FLTK_CONFIG) launcher.cpp launcher.hpp res.h
 	$(FLTK_CONFIG) --use-images --compile launcher.cpp $(LDFLAGS)
-
-launcher.cpp: launcher.hpp res.h
 
 res.h: input-gaming.png
 	$(XXD) -i $< | sed -e 's|unsigned|const unsigned|g' > $@
