@@ -22,6 +22,8 @@
   SOFTWARE.
 */
 
+#include <FL/Fl.H>
+#include <FL/platform.H>
 #include <string>
 #include <assert.h>
 #include <dirent.h>
@@ -577,7 +579,7 @@ int launcher::run()
 {
     load_default_icon();
     m_win->show();
-
+    LOG("PID: %d\nXID: 0x%08lx", getpid(), fl_x11_xid(m_win));
     return Fl::run();
 }
 
