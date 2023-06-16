@@ -11,7 +11,7 @@ Build dependencies are: `cmake xxd libpng zlib libx11 libxrender libxft libfontc
 
 On Debian-based systems: `apt install build-essential cmake xxd libpng-dev zlib1g-dev libx11-dev libxrender-dev libxft-dev libfontconfig-dev`
 
-Be sure to download the submodules before you start to compile: `git submodule init && git submodule update`
+Be sure to download FLTK first with `./get-fltk.sh` or `git clone https://github.com/fltk/fltk`.
 Then simply run `make`.
 
 [def1]: https://github.com/Aleph-One-Marathon

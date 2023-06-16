@@ -43,6 +43,9 @@ clean:
 distclean: clean
 	-rm -rf build
 
+maintainer-clean: distclean
+	-rm -rf fltk
+
 $(BIN): $(FLTK_CONFIG) launcher.cpp launcher.hpp res.h
 	$(FLTK_CONFIG) --use-images --compile launcher.cpp $(LDFLAGS)
 
