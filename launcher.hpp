@@ -194,7 +194,6 @@ public:
     void verbose(bool b) {m_verbose = b;}
     static bool verbose() {return m_verbose;}
 
-    static std::string get_progname_png();
     static std::string get_self_exe_png();
 
 private:

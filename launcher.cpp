@@ -34,14 +34,14 @@
 #include <stdlib.h>
 #include <sys/param.h>
 #include <unistd.h>
-#ifdef __BSD__
-#include <limits.h>
-#include <sys/sysctl.h>
+
+#if !defined(__linux__)
+/* https://github.com/gpakosz/whereami */
+#include "whereami.c"
 #endif
 
 #include "launcher.hpp"
 #include "res.h"  /* fallback icon resource */
-
 
 #define LOG(MSG, ...)  if (launcher::verbose()) {printf(MSG "\n", __VA_ARGS__);}
 
@@ -171,15 +171,9 @@ void launcher::load_default_icon()
     /* look for PNG file with the same name as the executable
      * plus ".png" extension */
 
-    std::string prog = get_progname_png();
-
-    if (!prog.empty() && default_icon_png(prog.c_str())) {
-        return;
-    }
-
     std::string path = get_self_exe_png();
 
-    if (!path.empty() && path != prog && default_icon_png(path.c_str())) {
+    if (!path.empty() && default_icon_png(path.c_str())) {
         return;
     }
 
@@ -400,89 +394,34 @@ bool launcher::download()
     return true;
 }
 
-/* returns program invocation name + ".png", but only
- * if the invocation name contains path separators
- */
-std::string launcher::get_progname_png()
-{
-#ifdef __BSD__
-    size_t buflen = MAXPATHLEN * 2;
-    char buf[buflen + 1];
-#endif
-    char *path = NULL;
-
-
-#ifdef __GLIBC__
-
-    path = program_invocation_name;
-
-#elif defined(__FreeBSD__) || defined(__DragonFly__)
-
-    int name[4] = {CTL_KERN, KERN_PROC, KERN_PROC_ARGS, -1};
-
-    if (sysctl(name, 4, buf, &buflen, NULL, 0) == 0) {
-        path = buf;
-    }
-
-#elif defined(__NetBSD__)
-
-    int name[4] = {CTL_KERN, KERN_PROC_ARGS, getpid(), KERN_PROC_ARGV};
-
-    if (sysctl(name, 4, buf, &buflen, NULL, 0) == 0) {
-        path = buf;
-    }
-
-#elif defined(__OpenBSD__)
-
-    int name[4] = {CTL_KERN, KERN_PROC_ARGS, getpid(), KERN_PROC_ARGV};
-    char **p = NULL;
-
-    if (sysctl(name, 4, buf, &buflen, NULL, 0) == 0) {
-        p = reinterpret_cast<char **>(buf);
-        if (p && p[0]) path = p[0];
-    }
-
-#endif
-
-    if (path && path[0] != 0 && strchr(path, '/')) {
-        return std::string(path) + ".png";
-    }
-
-    return "";
-}
-
 /* returns resolved path to executable + ".png" */
 std::string launcher::get_self_exe_png()
 {
-    std::string path;
-    char *rp = NULL;
+    std::string s;
+    char *path;
 
-#if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__NetBSD__)
-
-#if defined(__NetBSD__)
-    int name[4] = { CTL_KERN, KERN_PROC_ARGS, getpid(), KERN_PROC_PATHNAME };
+#ifdef __linux__
+    /* quick solution on Linux */
+    path = realpath("/proc/self/exe", NULL);
 #else
-    int name[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1 };
-#endif
-    char buf[MAXPATHLEN+1];
-    size_t buflen = MAXPATHLEN;
+    int dirname_length = 0;
+    int length = wai_getExecutablePath(NULL, 0, &dirname_length);
 
-    if (sysctl(name, 4, buf, &buflen, NULL, 0) == 0) {
-        rp = realpath(buf, NULL);
+    if (length < 1) {
+        return {};
     }
 
-#elif defined(__linux__)
-
-    rp = realpath("/proc/self/exe", NULL);
-
+    path = reinterpret_cast<char *>(malloc(length + 1));
+    wai_getExecutablePath(path, length, &dirname_length);
+    path[length] = '\0';
 #endif
 
-    if (rp) {
-        path = std::string(rp) + ".png";
-        free(rp);
+    if (path) {
+        s = std::string(path) + ".png";
+        free(path);
     }
 
-    return path;
+    return s;
 }
 
 /* the "download" button was clicked */
@@ -608,15 +547,9 @@ static void print_help(const char *argv0)
 
     printf(msg, argv0, argv0);
 
-    std::string prog = launcher::get_progname_png();
-
-    if (!prog.empty()) {
-        printf("  %s\n", prog.c_str());
-    }
-
     std::string self = launcher::get_self_exe_png();
 
-    if (!self.empty() && self != prog) {
+    if (!self.empty()) {
         printf("  %s\n", self.c_str());
     }
 

@@ -1,6 +1,6 @@
 CMAKE   := cmake
 XXD     := xxd
-CFLAGS  := -O3 -Wall -ffunction-sections -fdata-sections
+CFLAGS  := -O3 -Wall -ffunction-sections -fdata-sections -I.
 LDFLAGS := -Wl,--as-needed -Wl,--gc-sections -s
 
 BIN = launcher
