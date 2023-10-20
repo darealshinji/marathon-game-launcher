@@ -35,6 +35,9 @@
 #include <sys/param.h>
 #include <unistd.h>
 
+/* define "DEFAULT_SYSTEM_COLORS" to use system colors by default */
+//#define DEFAULT_SYSTEM_COLORS 1
+
 #if !defined(__linux__)
 /* https://github.com/gpakosz/whereami */
 #include "whereami.c"
@@ -526,7 +529,12 @@ static void print_help(const char *argv0)
 {
     const char *msg =
         "usage: %s --help\n"
-        "       %s [--verbose] [--download-script=SCRIPT] [--no-system-colors]\n"
+        "       %s [--verbose] [--download-script=SCRIPT] "
+#ifdef DEFAULT_SYSTEM_COLORS
+            "[--no-system-colors]\n"
+#else
+            "[--system-colors]\n"
+#endif
         "\n"
         "SCRIPT must be a shell script that downloads the game data into the\n"
         "directories listed below.\n"
@@ -562,7 +570,12 @@ static void print_help(const char *argv0)
 
 int main(int argc, char **argv)
 {
+#ifdef DEFAULT_SYSTEM_COLORS
     bool arg_system_colors = true;
+#else
+    bool arg_system_colors = false;
+#endif
+
     bool arg_verbose = false;
     const char *arg_script = NULL;
 
@@ -574,8 +587,12 @@ int main(int argc, char **argv)
             arg_verbose = true;
         } else if (strncmp(argv[i], "--download-script=", 18) == 0) {
             arg_script = argv[i] + 18;
+#ifdef DEFAULT_SYSTEM_COLORS
         } else if (strcmp(argv[i], "--no-system-colors") == 0) {
-            arg_system_colors = false;
+#else
+        } else if (strcmp(argv[i], "--system-colors") == 0) {
+#endif
+            arg_system_colors = !arg_system_colors;
         } else {
             fprintf(stderr, "unknown argument ignored: %s\n", argv[i]);
         }

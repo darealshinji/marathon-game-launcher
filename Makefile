@@ -1,17 +1,22 @@
-CMAKE   := cmake
-XXD     := xxd
-CFLAGS  := -O3 -Wall -ffunction-sections -fdata-sections -I.
-LDFLAGS := -Wl,--as-needed -Wl,--gc-sections -s
+CMAKE    := cmake
+XXD      := xxd
+CFLAGS   := -O3 -Wall -ffunction-sections -fdata-sections -I.
+CXXFLAGS := $(CFLAGS)
+LDFLAGS  := -Wl,--as-needed -Wl,--gc-sections -s
 
-BIN = launcher
+ifneq ($(DEFAULT_SYSTEM_COLORS),)
+DEFAULT_SYSTEM_COLORS_FLAG = -DDEFAULT_SYSTEM_COLORS
+endif
+
+BIN = marathon-game-launcher
 FLTK_PREFIX = $(CURDIR)/build/usr
 FLTK_CONFIG = $(FLTK_PREFIX)/bin/fltk-config
 
 VERBOSE ?= $(V)
 
 CMAKE_OPTIONS := -DCMAKE_BUILD_TYPE=Release
-CMAKE_OPTIONS += -DCMAKE_CXX_FLAGS="$(CFLAGS)"
 CMAKE_OPTIONS += -DCMAKE_C_FLAGS="$(CFLAGS)"
+CMAKE_OPTIONS += -DCMAKE_CXX_FLAGS="$(CXXFLAGS)"
 CMAKE_OPTIONS += -DCMAKE_INSTALL_PREFIX=$(FLTK_PREFIX)
 
 # turn off to make the build faster
@@ -47,7 +52,9 @@ maintainer-clean: distclean
 	-rm -rf fltk
 
 $(BIN): $(FLTK_CONFIG) launcher.cpp launcher.hpp res.h
-	$(FLTK_CONFIG) --use-images --compile launcher.cpp $(LDFLAGS)
+	$(CXX) $(shell $(FLTK_CONFIG) --use-images --cxxflags) $(CXXFLAGS) \
+  $(DEFAULT_SYSTEM_COLORS_FLAG) launcher.cpp -o $@ \
+  $(shell $(FLTK_CONFIG) --use-images --ldflags) $(LDFLAGS)
 
 res.h: input-gaming.png
 	$(XXD) -i $< | sed -e 's|unsigned|const unsigned|g' > $@
